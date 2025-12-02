@@ -4,7 +4,7 @@ pipeline {
   environment {
     IMAGE_NAME = "docker8098/test"
     IMAGE_TAG = "v${BUILD_NUMBER}"
-    PROD_SERVER = "devops@98.81.86.76"
+    PROD_SERVER = "54.152.240.126"
   }
   stages{
     stage('checkout') {
@@ -23,7 +23,7 @@ pipeline {
       }
     }
     stage('docker push') {
-      when { branch 'main'}
+      when { branch 'master'}
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           sh """
@@ -34,12 +34,12 @@ pipeline {
         }
       }
     }
-    stage('Prod Deployment') {
-      when { branch 'main' }
+    Stage('Prod Deployment') {
+      when { branch 'master' }
       steps {
-        sshagent(credentials: ['prod-server-ssh']) {
+        withCredentials([usernamePassword(credentialsId: 'prod-server-creds', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')]) {
           sh """
-            ssh -o StrictHostKeyChecking=no ${PROD_SERVER} "
+            sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$PROD_SERVER "
               docker pull ${IMAGE_NAME}:${IMAGE_TAG} &&
               docker stop web || true &&
               docker rm web || true &&
